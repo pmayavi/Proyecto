@@ -27,16 +27,16 @@ void loop() {
 
 //Colectar la data
 void data(){
-  temp = analogRead(TEMP);
+  temp = (((analogRead(TEMP) * 5.0 / 1023.0 * 1000.0) - 100) / 10) - 40;
   delay(50);
   
-  hum = analogRead(HUM);
+  hum = analogRead(HUM) / 10.23;
   delay(50);
   
-  pluv = analogRead(PLUV);
+  pluv = analogRead(PLUV) / 10.23 / 2.0;
   delay(50);
   
-  sol = analogRead(SOL);
+  sol = analogRead(SOL) / 10.23 / 5.0;
   delay(50);
 }
 
@@ -59,7 +59,7 @@ void alert(){
 
   if(sol < 5)
     Serial.println("ADVERTENCIA SE PRESENTO POCAS HORAS DE SOL");
-  else if(temp > 12)
+  else if(sol > 12)
     Serial.println("ADVERTENCIA SE PRESENTO MUCHAS HORAS DE SOL");
 }
 
