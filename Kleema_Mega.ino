@@ -1,81 +1,56 @@
-static int TEMP = A0;
-static int PLUV = A1;
-static int HUM = A3;
-static int SOL = A5;
+#include <DHT.h>
 
-double temp = 0;//Grados centrigrados
-double hum = 0;//Porcentaje de humedad
-double pluv = 0;//Milimetros de lluvia
-double sol = 0;//Horas de sol
+#define PLUV    A0
+#define SOL     A2
+#define DHTPIN  A1       // what pin we're connected to
+#define DHTTYPE DHT11   // DHT 22  (AM2302)
+
+DHT dht(DHTPIN, DHTTYPE); //// Initialize DHT sensor for normal 16mhz Arduino
+float temp = 0;//Grados centrigrados
+float hum = 0;//Porcentaje de humedad
+bool pluv = 0;//Milimetros de lluvia
+bool sol = 0;//Horas de sol
 
 void setup() {
-  pinMode(TEMP, INPUT);
-  pinMode(HUM, INPUT);
   pinMode(PLUV, INPUT);
   pinMode(SOL, INPUT);
-
-  pinMode(52, OUTPUT);
-  digitalWrite(52, HIGH);
+  pinMode(9, OUTPUT);
+  pinMode(8, OUTPUT);
+  digitalWrite(9,LOW);
+  digitalWrite(8,HIGH);
 
   Serial.begin(9600);
+  dht.begin();
 }
 
 void loop() {
   data();
-
-  alert();
-
-  sendData();
+  Send();
 }
 
 //Colectar la data
 void data() {
-  temp = (((analogRead(TEMP) * 5.0 / 1023.0 * 1000.0) - 100) / 10) + 5;
+  temp = dht.readTemperature();
   delay(5);
 
-  hum = 95 - analogRead(HUM) / 10.23;
+  hum = dht.readHumidity();
   delay(5);
 
   pluv = digitalRead(PLUV);
   delay(5);
 
-  sol = analogRead(SOL) / 10.23 / 5.0;
+  sol = analogRead(SOL) < 500;
   delay(5);
 }
 
-//Buscar anomalias
-void alert() {
-  alert(temp, 15, 25, "TEMPERATURA");
-  alert(sol, 3, 12, "LUZ");
-
-  if(pluv)
-    sendData("__[ESTA LLOVIENDO!]__");
-  else
-    alert(hum, 30, 60, "HUMEDAD");
-}
-
-void alert(int sensor, int bajo, int alto, String tipo) {
-  if (sensor < bajo) {
-    sendData("__[" + tipo + " BAJA!]__");
-    Serial.println();
-    delay(500);
-  }
-  else if (sensor > alto) {
-    sendData("__[" + tipo + " ALTA!]__");
-    Serial.println();
-    delay(500);
-  }
-
-}
 
 //Enviar la data
-void sendData() {
-  sendData("__[Datos_temp=" + String(temp) + "hum=" + String(hum) + "pluv=" + String(pluv) + "sol=" + String(sol) + "Fin]__");
-  Serial.println();
+void Send() {
+  Serial.println(" [Datos_temp=" + String(temp) + "hum=" + String(hum) + "pluv=" + String(pluv) + "sol=" + String(sol) + "Fin] ");
   delay(500);
 }
 
-void sendData(String peticion) {
+void sen(String peticion) {
   char a[100];
   peticion.toCharArray(a, peticion.length());
   Serial.write(a);
